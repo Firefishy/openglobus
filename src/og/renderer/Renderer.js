@@ -159,7 +159,7 @@ class Renderer {
 
         this.depthFramebuffer = null;
 
-        this._msaa = params.msaa || 4;
+        this._msaa = 0;
         this._internalFormat = "RGBA16F";
         this._format = "RGBA";
         this._type = "FLOAT";
@@ -453,7 +453,7 @@ class Renderer {
 
             this.sceneFramebuffer = new Multisample(this.handler, {
                 size: 1,
-                msaa: this._msaa,
+                msaa: 0,
                 internalFormat: this._internalFormat,
                 filter: "LINEAR"
             }).init();
