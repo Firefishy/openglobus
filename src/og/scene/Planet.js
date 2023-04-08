@@ -1142,10 +1142,15 @@ export class Planet extends RenderNode {
         }
 
         if (this.camera.isFirstPass) {
+            let prevSegment;
             this.camera.update();
+
             this._firstPASS();
-            this.camera.checkTerrainCollision();
+
+            this.camera.checkTerrainCollision(this.camera._insideSegment);
+
             this.camera.update();
+
 
             // Here is the planet node dispatches a draw event before
             // rendering begins and we have got render nodes.

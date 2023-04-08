@@ -273,29 +273,113 @@ class Segment {
      * @param {Vec3} [normal] - Terrain point normal.
      * @returns {number} -
      */
+    // getTerrainPoint(xyz, insideSegmentPosition, res) {
+    //     let verts = this.tempVertices;
+    //
+    //     if (verts && verts.length) {
+    //         let norm = this.planet.ellipsoid.getSurfaceNormal3v(xyz);
+    //         _ray.set(xyz, norm.negateTo());
+    //
+    //         let ne = this._extent.northEast,
+    //             sw = this._extent.southWest,
+    //             size = Math.sqrt(verts.length / 3) - 1;
+    //
+    //         let xmax = ne.lon, ymax = ne.lat,
+    //             xmin = sw.lon, ymin = sw.lat;
+    //
+    //         let x = insideSegmentPosition.lon,
+    //             y = insideSegmentPosition.lat;
+    //
+    //         let qx = (xmax - xmin) / size,
+    //             qy = (ymax - ymin) / size;
+    //
+    //         let xn = x - xmin,
+    //             yn = y - ymin;
+    //
+    //         let indX = Math.floor(xn / qx),
+    //             indY = Math.floor(size - yn / qy);
+    //
+    //         let ind_v0 = ((size + 1) * indY + indX) * 3;
+    //         let ind_v2 = ((size + 1) * (indY + 1) + indX) * 3;
+    //
+    //         _v0.set(verts[ind_v0], verts[ind_v0 + 1], verts[ind_v0 + 2]);
+    //         _v1.set(verts[ind_v0 + 3], verts[ind_v0 + 4], verts[ind_v0 + 5]);
+    //         _v2.set(verts[ind_v2], verts[ind_v2 + 1], verts[ind_v2 + 2]);
+    //
+    //         let d = _ray.hitTriangle(_v0, _v1, _v2, res);
+    //
+    //         if (d === Ray.INSIDE) {
+    //             return xyz.distance(res);
+    //         } else if (d === Ray.AWAY) {
+    //             _rayEx.set(xyz, norm);
+    //             let d = _rayEx.hitTriangle(_v0, _v1, _v2, res);
+    //             if (d === Ray.INSIDE) {
+    //                 return -xyz.distance(res);
+    //             }
+    //         } else if (d === Ray.INPLANE) {
+    //             return 0;
+    //         }
+    //
+    //         _v3.set(verts[ind_v2 + 3], verts[ind_v2 + 4], verts[ind_v2 + 5]);
+    //
+    //         d = _ray.hitTriangle(_v1, _v3, _v2, res);
+    //         if (d === Ray.INSIDE) {
+    //             return xyz.distance(res);
+    //         } else if (d === Ray.AWAY) {
+    //             _rayEx.set(xyz, norm);
+    //             let d = _rayEx.hitTriangle(_v1, _v3, _v2, res);
+    //             if (d === Ray.INSIDE) {
+    //                 return -xyz.distance(res);
+    //             }
+    //         } else if (d === Ray.INPLANE) {
+    //             return 0;
+    //         }
+    //
+    //         if (d === Ray.AWAY) {
+    //
+    //             _rayEx.set(xyz, norm);
+    //             d = _rayEx.hitTriangle(_v0, _v1, _v3, res);
+    //             if (d == Ray.INSIDE) {
+    //                 return -xyz.distance(res);
+    //             } else if (d == Ray.INPLANE) {
+    //                 return 0;
+    //             }
+    //
+    //             d = _rayEx.hitTriangle(_v1, _v2, _v3, res);
+    //             if (d == Ray.INSIDE) {
+    //                 return -xyz.distance(res);
+    //             } else if (d == Ray.INPLANE) {
+    //                 return 0;
+    //             }
+    //
+    //             return -xyz.distance(res);
+    //         }
+    //
+    //         return xyz.distance(res);
+    //     } else {
+    //         return xyz.distance(this.planet.ellipsoid.hitRay(_ray.origin, _ray.direction));
+    //     }
+    // }
+
     getTerrainPoint(xyz, insideSegmentPosition, res) {
         let verts = this.tempVertices;
 
         if (verts && verts.length) {
             let norm = this.planet.ellipsoid.getSurfaceNormal3v(xyz);
-            _ray.set(xyz, norm.negateTo());
+            _ray.set(xyz.add(norm.scaleTo(100000000)), norm.negateTo());
 
             let ne = this._extent.northEast,
                 sw = this._extent.southWest,
                 size = Math.sqrt(verts.length / 3) - 1;
 
-            let xmax = ne.lon,
-                ymax = ne.lat,
-                xmin = sw.lon,
-                ymin = sw.lat,
-                x = insideSegmentPosition.lon,
+            let xmax = ne.lon, ymax = ne.lat,
+                xmin = sw.lon, ymin = sw.lat;
+
+            let x = insideSegmentPosition.lon,
                 y = insideSegmentPosition.lat;
 
-            let sxn = xmax - xmin,
-                syn = ymax - ymin;
-
-            let qx = sxn / size,
-                qy = syn / size;
+            let qx = (xmax - xmin) / size,
+                qy = (ymax - ymin) / size;
 
             let xn = x - xmin,
                 yn = y - ymin;
@@ -306,40 +390,48 @@ class Segment {
             let ind_v0 = ((size + 1) * indY + indX) * 3;
             let ind_v2 = ((size + 1) * (indY + 1) + indX) * 3;
 
-            _v0.set(verts[ind_v0], verts[ind_v0 + 1], verts[ind_v0 + 2]);
-            _v1.set(verts[ind_v0 + 3], verts[ind_v0 + 4], verts[ind_v0 + 5]);
-            _v2.set(verts[ind_v2], verts[ind_v2 + 1], verts[ind_v2 + 2]);
+            if (!this._extent.isInside(insideSegmentPosition)) {
+                console.log("dot");
+                //return 0;
+                //debugger
+            }
 
-            let d = _ray.hitTriangle(_v0, _v1, _v2, res);
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
 
-            if (d === Ray.INSIDE) {
-                return xyz.distance(res);
-            } else if (d === Ray.AWAY) {
-                _rayEx.set(xyz, norm);
-                let d = _rayEx.hitTriangle(_v0, _v1, _v2, res);
-                if (d === Ray.INSIDE) {
-                    return -xyz.distance(res);
+                    let ind_v0 = ((size + 1) * i + j) * 3;
+                    let ind_v2 = ((size + 1) * (i + 1) + j) * 3;
+
+                    _v0.set(verts[ind_v0], verts[ind_v0 + 1], verts[ind_v0 + 2]);
+                    _v1.set(verts[ind_v0 + 3], verts[ind_v0 + 4], verts[ind_v0 + 5]);
+                    _v2.set(verts[ind_v2], verts[ind_v2 + 1], verts[ind_v2 + 2]);
+                    _v3.set(verts[ind_v2 + 3], verts[ind_v2 + 4], verts[ind_v2 + 5]);
+                    let d = _ray.hitTriangle(_v0, _v1, _v2, res);
+
+                    if (d === Ray.INSIDE) {
+                        if (xyz.sub(res).normalize().dot(norm) < 0) {
+                            return -xyz.distance(res);
+                        }
+                        return xyz.distance(res);
+                    }
+
+                    d = _ray.hitTriangle(_v1, _v3, _v2, res);
+
+                    if (d === Ray.INSIDE) {
+                        if (xyz.sub(res).normalize().dot(norm) < 0) {
+                            return -xyz.distance(res);
+                        }
+                        return xyz.distance(res);
+                    }
                 }
             }
 
-            _v3.set(verts[ind_v2 + 3], verts[ind_v2 + 4], verts[ind_v2 + 5]);
+            // _v0.set(verts[ind_v0], verts[ind_v0 + 1], verts[ind_v0 + 2]);
+            // _v1.set(verts[ind_v0 + 3], verts[ind_v0 + 4], verts[ind_v0 + 5]);
+            // _v2.set(verts[ind_v2], verts[ind_v2 + 1], verts[ind_v2 + 2]);
+            // _v3.set(verts[ind_v2 + 3], verts[ind_v2 + 4], verts[ind_v2 + 5]);
 
-            d = _ray.hitTriangle(_v1, _v3, _v2, res);
-            if (d === Ray.INSIDE) {
-                return xyz.distance(res);
-            } else if (d === Ray.AWAY) {
-                _rayEx.set(xyz, norm);
-                let d = _rayEx.hitTriangle(_v1, _v3, _v2, res);
-                if (d === Ray.INSIDE) {
-                    return -xyz.distance(res);
-                }
-            }
-
-            if (d === Ray.AWAY) {
-                return -xyz.distance(res);
-            }
-
-            return xyz.distance(res);
+            //return xyz.distance(res);
         } else {
             return xyz.distance(this.planet.ellipsoid.hitRay(_ray.origin, _ray.direction));
         }

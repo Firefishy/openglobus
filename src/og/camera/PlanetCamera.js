@@ -621,10 +621,23 @@ class PlanetCamera extends Camera {
         }
     }
 
-    checkTerrainCollision() {
+    checkTerrainCollision(insideSegment) {
+        // this._terrainAltitude = this._lonLat.height;
+        // if (this._insideSegment && this._insideSegment.planet) {
+        //     this._terrainAltitude = this._insideSegment.getTerrainPoint(
+        //         this.eye,
+        //         this._lonLatMerc,
+        //         this._terrainPoint
+        //     );
+        //     if (this._terrainAltitude < this.minAltitude && this._checkTerrainCollision) {
+        //         this.setAltitude(this.minAltitude);
+        //     }
+        //     return this._terrainPoint;
+        // }
+
         this._terrainAltitude = this._lonLat.height;
-        if (this._insideSegment && this._insideSegment.planet) {
-            this._terrainAltitude = this._insideSegment.getTerrainPoint(
+        if (insideSegment && insideSegment.planet) {
+            this._terrainAltitude = insideSegment.getTerrainPoint(
                 this.eye,
                 this._lonLatMerc,
                 this._terrainPoint
@@ -634,6 +647,7 @@ class PlanetCamera extends Camera {
             }
             return this._terrainPoint;
         }
+
     }
 
     getSurfaceVisibleDistance(d) {
