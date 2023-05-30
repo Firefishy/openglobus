@@ -226,7 +226,8 @@ class TouchNavigation extends Control {
                 const scale = zoomCur.length() / zoomPrev.length();
 
                 let d = distanceToPointOnEarth * -(1 - scale);
-                cam.eye.addA(cam.getForward().scale(d));
+
+                cam.eye.addA(cam.unproject(middle.x, middle.y).scale(d));
                 cam.rotateAround(-deltaAngle, false, this.pointOnEarth, this.earthUp);
 
                 const panCur = t0.vec.add(t1.vec).scale(0.5);
