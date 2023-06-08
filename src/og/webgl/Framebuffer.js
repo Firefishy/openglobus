@@ -240,10 +240,36 @@ export class Framebuffer {
      */
     readPixels(res, nx, ny, index = 0, w = 1, h = 1) {
         var gl = this.handler.gl;
+
+// Создайте и привяжите буфер пикселей (PixelPackBuffer)
+        var pixelPackBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, pixelPackBuffer);
+
         gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo);
         gl.readBuffer && gl.readBuffer(gl.COLOR_ATTACHMENT0 + index || 0);
-        gl.readPixels(nx * this._width, ny * this._height, w, h, gl.RGBA, gl[this._typeArr[index]], res);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+// Установите размер буфера равным количеству пикселей, которые вы собираетесь прочитать
+        var bufferSizeInBytes = w * h * 4; // 4 байта на пиксель (RGBA)
+        gl.bufferData(gl.PIXEL_PACK_BUFFER, bufferSizeInBytes, gl.STATIC_DRAW);
+
+// Сделайте операцию чтения пикселей с использованием буфера
+        gl.readPixels(nx * this._width, ny * this._height, w, h, gl.RGBA, gl[this._typeArr[index]], 0);
+
+// Отвяжите буфер
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+
+// Выделите память для полученных пикселей
+        var pixelData = new Uint8Array(bufferSizeInBytes);
+
+// Скопируйте данные из буфера в память pixelData
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, pixelPackBuffer);
+        gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, pixelData);
+
+// Отвяжите буфер
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+
+// Верните полученные пиксели
+        return pixelData;
     }
 
     /**
@@ -252,13 +278,53 @@ export class Framebuffer {
      * @param {Uint8Array} res - Result array.
      * @param {Number} [attachmentIndex=0] - color attachment index.
      */
-    readAllPixels(res, attachmentIndex = 0) {
-        var gl = this.handler.gl;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo);
-        gl.readBuffer && gl.readBuffer(gl.COLOR_ATTACHMENT0 + attachmentIndex);
-        gl.readPixels(0, 0, this._width, this._height, gl.RGBA, gl[this._typeArr[attachmentIndex]], res);
+    readAllPixels( res, attachmentIndex = 0) {
+        var handler = this.handler;
+        var gl = handler.gl;
+
+        // Создайте и привяжите буфер пикселей (PixelPackBuffer)
+        var pixelPackBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, pixelPackBuffer);
+
+        // Привяжите фреймбуфер
+        gl.bindFramebuffer(gl.FRAMEBUFFER, handler._fbo);
+
+        // Установите активный буфер чтения (если поддерживается)
+        if (gl.readBuffer) {
+            gl.readBuffer(gl.COLOR_ATTACHMENT0 + attachmentIndex);
+        }
+
+        // Получите размер фреймбуфера
+        var framebufferWidth = handler._width;
+        var framebufferHeight = handler._height;
+
+        // Установите размер буфера пикселей равным размеру фреймбуфера
+        var bufferSizeInBytes = framebufferWidth * framebufferHeight * 4; // 4 байта на пиксель (RGBA)
+        gl.bufferData(gl.PIXEL_PACK_BUFFER, bufferSizeInBytes, gl.STATIC_DRAW);
+
+        // Сделайте операцию чтения пикселей с использованием буфера
+        gl.readPixels(0, 0, framebufferWidth, framebufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, 0);
+
+        // Отвяжите буфер пикселей
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+
+        // Выделите память для полученных пикселей
+        var pixelData = new Uint8Array(bufferSizeInBytes);
+
+        // Скопируйте данные из буфера в память pixelData
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, pixelPackBuffer);
+        gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, pixelData);
+
+        // Отвяжите буфер пикселей
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+
+        // Отвяжите фреймбуфер
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+        // Запишите полученные пиксели в переданный буфер res
+        res.set(pixelData);
     }
+
 
     /**
      * Activate framebuffer frame to draw.
